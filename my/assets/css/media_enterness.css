@@ -1,0 +1,356 @@
+.media-enterness-chat{
+  position: fixed;
+  width: 230px;
+  bottom: 0;
+  right: 0;
+  margin-right: 50px;
+  /*margin-bottom: -250px;*/
+  animation-name: open-chat;
+  animation-duration: 0.5s;
+  z-index: 999999999999999;
+}
+
+/* HEADER */
+.media-enterness-chat h5{
+  margin: 0!important;
+  padding: 0!important;
+  font-weight: lighter;
+  opacity: 0.9;
+  transition-duration: 0.5s;
+}
+
+.media-enterness-chat .head-media-enterness{
+  position: relative;
+  border-radius: 5px 5px 0 0;
+  border: 0px solid #084B8A;
+  text-align: center;
+  color: white;
+  background-color: #1976C9;
+  /* background-image: linear-gradient(to bottom right, #045FB4, #084B8A);*/
+  margin: 0;
+  padding: 10px;
+  font-size: 18px;
+  /* text-transform: uppercase; */
+  text-decoration: none!important;
+  cursor: pointer;
+  padding-top: 10px;
+  padding-bottom: 7px;
+  transition-duration: 0.5s;
+}
+
+.media-enterness-chat .head-media-enterness:hover h5{
+  opacity: 1;
+  transition-duration: 0.5s;
+}
+
+.enterness-minimize-icon{
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: -3px 5px 0 0;
+  opacity: 0.5;
+  transition-duration: 0.5s;
+}
+
+.enterness-minimize-icon:hover{
+  color: white;
+  transition-duration: 0.5s;
+  opacity: 1;
+}
+
+.media-enterness-chat .body-media-enterness{
+  background: #f7f7f7;
+  border: 1px solid silver;
+  height: 250px;
+  padding: 0 0 0 10px;
+}
+
+/* ICONE */
+.enterness-icon-chat{
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin-right: 40px;
+  margin-bottom: 40px;
+  height: 70px;
+  width: 70px;
+  border-radius: 50%;
+  box-shadow: 3px 3px 15px black;
+  cursor: pointer;
+  z-index: 999999999999999;
+}
+
+.anima-icon-enterness{
+  animation: enterness-spin 5s infinite linear;
+  animation-delay: 4s;
+}
+
+#enterness-icon-chat .enterness-icon-background{
+  width: 100%;
+  height: 100%;
+  background-image: url('../img/chat-navy.png');
+  background-repeat: repeat;
+  background-position: left;
+  background-size: contain;
+}
+
+.enterness-show-icon{
+  margin-right: 40px;
+  opacity: 0.85;
+  transition-duration: 0.5s;
+}
+
+.enterness-show-icon:hover{
+  opacity: 1;
+  transition-duration: 0.5s;
+}
+
+.enterness-hide-icon{
+  margin-right: -20px;
+  opacity: 0;
+  transition-duration: 0.5s;
+}
+
+/* INSIDE BOX STYLES */
+#section-new-enterness{
+  display: none;
+}
+
+/* SESSAO NEW */
+
+#section-new-enterness h4{
+  padding: 0!important;
+  margin: 10px 10px -10px 0!important;
+  font-size: 18px;
+  text-align: right;
+  color: silver;
+  cursor: default;
+
+}
+.juntaFormEnterness{
+  margin: 0!important;
+  padding: 0 10px 10px 0!important;
+}
+
+.juntaFormEnterness label{
+  margin: 0!important;
+  padding: 0!important;
+  color: gray!important;
+  font-size: 14px!important;
+}
+
+
+.juntaFormEnterness input,
+.juntaFormEnterness select{
+  width: 100%!important;
+  height: 35px!important;
+  border: 1px solid silver;
+  padding-left: 10px!important;
+  margin: -5px 0 0 0!important;
+  color: #045FB4!important;
+  transition-duration: 0.5s!important;
+}
+
+.juntaFormEnterness input:hover,
+.juntaFormEnterness input:active,
+.juntaFormEnterness input:target,
+.juntaFormEnterness select:hover,
+.juntaFormEnterness select:active,
+.juntaFormEnterness select:target{
+  border: 1px solid #045FB4!important;
+  transition-duration: 0.5s!important;
+}
+
+.juntaFormEnterness button{
+  border-radius: 4px;
+  background-color: #045FB4;
+  border: 1px solid #045FB4;
+  color: white;
+  height: 40px;
+  width: 100%;
+  margin: auto;
+}
+
+.juntaFormEnterness button:hover{
+  transition-duration: 0.5s;
+  border-left: 1px solid white;
+  border-top: 1px solid white;
+  border-right: 2px solid #084B8A;
+  border-bottom: 2px solid #084B8A;
+}
+
+.inputDangerEnterness{
+  transition-duration: 0.5s;
+  border: 1px solid red;
+}
+
+
+/* SESSAO OLD */
+
+.messages-media-enterness{
+  height: 205px;
+  width: 100%;
+  padding-right: 10px;
+  overflow-y: auto;
+  padding-bottom: 5px;
+}
+.messages-media-enterness::scrollbar-track {
+  background-color: #F4F4F4;
+}
+.messages-media-enterness::scrollbar {
+  width: 6px;
+  background: #F4F4F4;
+}
+.messages-media-enterness::scrollbar-thumb {
+  background: #dad7d7;
+}
+
+.messages-media-enterness::-moz-scrollbar-track {
+  background-color: #F4F4F4;
+}
+.messages-media-enterness::-moz-scrollbar {
+  width: 6px;
+  background: #F4F4F4;
+}
+.messages-media-enterness::-moz-scrollbar-thumb {
+  background: #dad7d7;
+}
+
+.messages-media-enterness::-webkit-scrollbar-track {
+  background-color: #F4F4F4;
+}
+.messages-media-enterness::-webkit-scrollbar {
+  width: 6px;
+  background: #F4F4F4;
+}
+.messages-media-enterness::-webkit-scrollbar-thumb {
+  background: #dad7d7;
+}
+
+.form-media-enterness{
+  height: 45px;
+  width: 100%;
+  padding-right: 10px;
+}
+
+.form-media-enterness form{
+  border-top: 1px solid silver;
+
+}
+
+.inMsg-media-enternes{
+  width: 170px;
+  height: 30px;
+  margin-top: 5px;
+  padding-left: 5px;
+  float: left;
+  font-size: 12px;
+  resize: none;
+}
+
+.inMsg-media-enternes:hover,
+.inMsg-media-enternes:focus,
+.inMsg-media-enternes:active{
+  border: 1px solid #045FB4;
+  transition-duration: 0.5s;
+}
+
+.btn-inMsg-enterness{
+  margin-top: 5px;
+  float: right;
+  background-color: #045FB4;
+  color: #eee;
+  height: 30px;
+  width: 30px;
+  border: 0px transparent;
+  padding: 10px;
+  border-radius: 2px;
+  background-image: url('../images/button.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+}
+
+.btn-inMsg-enterness:hover{
+  background-color: #084B8A;
+  transition-duration: 0.5s;
+  box-shadow: 2px 2px 5px gray;
+
+}
+
+.footer-media-enterness{
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  cursor: default;
+}
+.footer-media-enterness a{
+  color: #045FB4;
+  text-decoration: none;
+}
+.footer-media-enterness a:hover{
+  transition-duration: 0.4s;
+  color: #084B8A;
+}
+
+/*MSG STYLES*/
+.msg-entrante-enterness,
+.msg-sainte-enterness{
+  transition-duration: 0.5s;
+  width: 100%;
+  clear: both;
+}
+.msg-entrante-enterness span{
+  background-color: white;
+  padding: 5px 10px 5px 15px!important;
+  float: left;
+  max-width: 80%;
+  font-size: 12px;
+  line-height: 14px;
+  margin: 3px 0;
+  border-radius: 0px 10px 10px 10px;
+  box-shadow: 1px 1px 3px silver;
+}
+
+.msg-sainte-enterness span{
+  float: right;
+  max-width: 80%;
+  font-size: 12px;
+  background-color: #CEE3F6;
+  padding: 5px 10px 5px 15px!important;
+  line-height: 14px;
+  margin: 3px 0;
+  border-radius: 10px 10px 0px 10px;
+  box-shadow: 1px 1px 3px silver;
+}
+
+/* ANIMAÇÕES */
+@keyframes open-chat {
+  from {
+    margin-bottom: -200px;
+    opacity: 0;
+  }
+}
+
+@keyframes enterness-spin {
+  5% {
+    transform: rotate(15deg);
+  }
+  10% {
+    transform: rotate(-15deg);
+  }
+  15% {
+    transform: rotate(15deg);
+  }
+  20% {
+    transform: rotate(-15deg);
+  }
+  25% {
+    transform: rotate(0deg);
+  }
+}
+
+.bloc-1{
+  margin-right:
+}
