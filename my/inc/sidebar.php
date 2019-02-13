@@ -66,7 +66,7 @@
             </li>
           <?php } ?>
 
-  
+
             <?php if($util->getSectionPermission('media')){ ?>
               <li class="nav-label">Configurações</li>
               <li>
@@ -86,7 +86,7 @@
 				            <a class="has-arrow  " href="#" aria-expanded="false">Usuários</a>
 				            <ul aria-expanded="false" class="collapse">
 				              <li><a href="coordenadores">Coordenadores</a></li>
-				              <li><a href="administradores">Administradores</a></li>
+				              <!-- <li><a href="administradores">Administradores</a></li> -->
 				              <li><a href="supervisores">Supervisores</a></li>
 				              <li><a href="agentes">Agentes</a></li>
 				            </ul>
@@ -196,7 +196,7 @@
 									<li>
 			              <a class="has-arrow  " href="#" aria-expanded="false">Usuários</a>
 			              <ul aria-expanded="false" class="collapse">
-			                <li><a href="administradores">Administradores</a></li>
+			                <!-- <li><a href="administradores">Administradores</a></li> -->
 			                <li><a href="supervisores">Supervisores</a></li>
 			                <li><a href="agentes">Agentes</a></li>
 			              </ul>
@@ -320,7 +320,7 @@
 			              <li><a href="filas"aria-expanded="false">Filas</a></li>
 			            <?php } ?>
 		            </ul>
-							</li>   
+							</li>
             <?php } ?>
             <?php
 
