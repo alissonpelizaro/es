@@ -32,7 +32,7 @@ include 'inc/head.php';
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <h4 class="card-title text-center">Configurações <i>MyOmni</i>:</h4>
+              <h4 class="card-title text-center">Configurações <i>EasyChannel</i>:</h4>
               <div class="row">
                 <div class="col-lg-12">
                   <!-- Nav tabs -->
@@ -114,6 +114,54 @@ include 'inc/head.php';
                                     </div>
                                     <hr>
                                   </div>
+                                  <div class="col-12">
+                                    <p class="m-0 m-t-10 m-l-20 padrao">Configurações de URA</p>
+                                  </div>
+                                  <div class="col-12">
+                                    <div class="form-group">
+                                      <label class="col-sm-12 control-label junta">Mostrar na URA:</label>
+                                      <div class="col-sm-12">
+                                        <select class="form-control" name="exibirFilas">
+                                          <option value="disp"<?php echo $conf->exibirFilas == 'disp' ? " selected" : "" ?>>Apenas as filas que possuem agentes disponíveis para atender</option>
+                                          <option value="todas"<?php echo $conf->exibirFilas == 'todas' ? " selected" : "" ?>>Todas as filas, e acionar o cliente quando houver alguém para atender</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-12">
+                                    <div class="col form-group">
+                                      <label class="control-label junta m-r-15 clear">Limitar horário de funcionamento da URA?</label>
+                                      <input value="1"
+                                      type="checkbox"
+                                      id="inLimite"
+                                      name="checkLimit"
+                                      <?php echo $limiteConf->status ? "checked" : ""; ?>>
+                                      <span class="clear-both <?php echo $limiteConf->status ? "" : "hide"; ?>" id="spanLimite">
+                                        <div class="row">
+                                          <div class="m-l-15" style="width: 60px;">
+                                            <div class="form-group">
+                                              <label class=" control-label junta">Inicio:</label>
+                                                <input type="text" class="form-control hora" id="horaIniLimite" name="horaIni" value="<?php echo $limiteConf->inicio ?>" placeholder="00:00">
+                                            </div>
+                                          </div>
+                                          <div class="m-l-5" style="width: 60px;">
+                                            <div class="form-group">
+                                              <label class="control-label junta">Fim:</label>
+                                              <input type="text" class="form-control hora" id="horaFimLimite" name="horaFim" value="<?php echo $limiteConf->fim ?>" placeholder="23:59">
+                                            </div>
+                                          </div>
+                                          <div class="col">
+                                            <div class="form-group">
+                                              <label class="col-sm-12 control-label junta">Resposta para mensagens enviadas fora do horário:</label>
+                                              <div class="col-sm-12">
+                                                <input type="text" class="form-control" id="respostaLimite" maxlength="250" name="limiteResp" value="<?php echo $limiteConf->resposta ?>">
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </span>
+                                    </div>
+                                  </div>
                                   <div class="col-6">
                                     <div class="form-group">
                                       <label class="col control-label junta">Mensagem de boas-vindas:</label>
@@ -156,7 +204,7 @@ include 'inc/head.php';
                       <div class="card-body">
                         <div class="jumbotron">
                           <h1 class="display-6 padrao">Midias sociais</h1>
-                          <i class="lead">Realize a checagem da comunicação com as mídias sociais que o MyOmni tem integração</i>
+                          <i class="lead">Realize a checagem da comunicação com as mídias sociais que o EasyChannel tem integração</i>
                           <hr class="my-4">
                           <form class="enterness" enctype="multipart/form-data" action="controlPanel" method="post">
                             <input type="hidden" name="tab" value="midias">
@@ -260,7 +308,7 @@ include 'inc/head.php';
                                   <p class="m-0 m-t-10 m-l-20 padrao">Importação de clientes</p>
                                   <div class="col-sm-12">
                                     <div class="form-group">
-                                      <label class="control-label junta col-sm-12">Manter os dados do MyOmni</label>
+                                      <label class="control-label junta col-sm-12">Manter os dados do EasyChannel</label>
                                       <div class="col-sm-12">
                                         <input value="1"
                                         type="checkbox"
@@ -387,7 +435,7 @@ include 'inc/head.php';
                       <div class="card-body">
                         <div class="jumbotron">
                           <h1 class="display-6 padrao">Integrações</h1>
-                          <i class="lead">Ajuste integrações automáticas do MyOmni com  outros CRM</i>
+                          <i class="lead">Ajuste integrações automáticas do EasyChannel com  outros CRM</i>
                           <hr class="my-4">
                           <div class="row">
                             <div class="col-3">
@@ -509,7 +557,7 @@ include 'inc/head.php';
                     <div class="tab-pane" id="monitor" role="tabpanel">
                       <div class="jumbotron">
                         <h1 class="display-6 padrao">Monitoração</h1>
-                        <i class="lead">Monitore em tempo real o desempenho do servidor MyOmni e cheque versões do sistema</i>
+                        <i class="lead">Monitore em tempo real o desempenho do servidor EasyChannel e cheque versões do sistema</i>
                         <hr class="my-4">
                         <div id="monitorBody"></div>
                       </div>
@@ -534,11 +582,35 @@ include 'inc/head.php';
 
   $(document).ready(function(){
 
+    $('.hora').mask('00:00');
+
+
     $("#inTransbordo").click(function(){
       if($(this).is(':checked')){
         $("#spanTransbordo").fadeIn();
       } else {
         $("#spanTransbordo").hide();
+      }
+    });
+
+    $("#inLimite").click(function(){
+      if($(this).is(':checked')){
+        $("#spanLimite").fadeIn();
+
+        $("#horaIniLimite").prop('required',true);
+        $("#horaFimLimite").prop('required',true);
+        $("#respostaLimite").prop('required',true);
+
+
+      } else {
+        $("#spanLimite").hide();
+
+        $("#horaIniLimite").val('');
+        $("#horaFimLimite").val('');
+
+        $("#horaIniLimite").prop('required',false);
+        $("#horaFimLimite").prop('required',false);
+        $("#respostaLimite").prop('required',false);
       }
     });
 
@@ -558,6 +630,7 @@ include 'inc/head.php';
       $.switcher('#inAtivo');
       $.switcher('#inManter');
       $.switcher('#inTransbordo');
+      $.switcher('#inLimite');
       $.switcher('#inCheckFollowize');
       $.switcher('#inCheckEnterness');
       $('.num-min').mask('0000');
@@ -679,6 +752,12 @@ include 'inc/head.php';
     $("#resincronizarWhatsAppBody").hide();
     $("#QrCodeErroMessage").hide();
   }
+
+  <?php if(isset($saved) && $saved){
+    ?>
+    swal("Feito!", "As configurações foram atualizadas!", "success");
+    <?php
+  } ?>
 
 
   <?php if(isset($_GET['setup']) && $_GET['setup'] == 'success'){

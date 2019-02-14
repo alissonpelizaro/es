@@ -6,6 +6,8 @@
 
 include '../coreExt.php';
 require_once 'Sincronismo.php';
+require_once 'Database.php';
+
 set_time_limit(0);
 
 $sinc = new Sincronismo;
@@ -18,7 +20,6 @@ if(isset($argv[1]) && $sinc->checaParam($argv[1])){
   die();
 }
 echo "O motor foi iniciado.\n\r";
-//echo $sinc->checaApiWhatsApp();
 
 while($run){
   usleep(1000);
@@ -36,6 +37,9 @@ while($run){
 
     //Desloga usuários que fecharam o browser
     $sinc->checaSessoes();
+
+    //Checa se exite usuários estacionados que ja podem ser atendidos
+    $sinc->checaParked();
 
   } else {
     $eng++;

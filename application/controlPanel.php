@@ -11,6 +11,19 @@ try {
 			$prior = tratarString($_POST['prior']);
 			$transf = tratarString($_POST['transf']);
 			$transb = tratarString($_POST['transb']);
+			$exibirFilas = tratarString($_POST['exibirFilas']);
+
+			$limiteIni = tratarString($_POST['horaIni']);
+			$limiteFim = tratarString($_POST['horaFim']);
+			$limiteResp = tratarString($_POST['limiteResp']);
+
+			if($limiteIni && $limiteResp){
+				$limiteHr = $limiteIni.','.$limiteFim;
+			} else {
+				$limiteHr = "";
+				$limiteResp = "";
+			}
+
 			if(isset($_POST['checkTransb'])){
 				$transb = tratarString($_POST['transb']);
 				if($transb == ""){
@@ -26,7 +39,10 @@ try {
 			`prioridade` = '$prior',
 			`transf` = '$transf',
 			`saudacao` = '$bVindas',
-			`transb` = '$transb'
+			`transb` = '$transb',
+			`exibirFilas` = '$exibirFilas',
+			`limite` = '$limiteHr',
+			`limiteResp` = '$limiteResp'
 			WHERE `idConfig` = 1";
 
 			if($db->query($sql)){
@@ -184,6 +200,22 @@ try {
 	$conf = $db->query($sql);
 	$conf = (object) $conf->fetch();
 
+	$limiteConf = (object) array(
+		'status' => 0,
+		'inicio' => "",
+		'fim' => "",
+		'resposta' => ""
+	);
+
+	if($conf->limite){
+		$hrs = explode(",",$conf->limite);
+
+		$limiteConf->status = 1;
+		$limiteConf->inicio = $hrs[0];
+		$limiteConf->fim = $hrs[1];
+		$limiteConf->resposta = $conf->limiteResp;
+	}
+
 	$sql = "SELECT `ativo` FROM `setor` WHERE `idSetor` = '$setorUser'";
 	$ativo = $db->query($sql);
 	$ativo = $ativo->fetch();
@@ -225,9 +257,9 @@ function updateMaterCliente($dadosCliente, $db, $dados) {
 		$fone = $dados["fone"];
 	}
 	$fone = array(
-			array(true, $fone),
-			array(false, ""),
-			array(false, "")
+		array(true, $fone),
+		array(false, ""),
+		array(false, "")
 	);
 
 	if($dados["nascimento"] == "" || $dados["nascimento"] == NULL){
@@ -361,11 +393,11 @@ function updateCliente($dadosCliente, $db, $dados) {
 		$fone = foneBd(trataFone(tratarString($dadosCliente[1])));
 	}
 	$fone = array(
-			array(true, $fone),
-			array(false, ""),
-			array(false, "")
+		array(true, $fone),
+		array(false, ""),
+		array(false, "")
 	);
-	
+
 	if($dadosCliente[2] == "" || $dadosCliente[2] == NULL){
 		if($dados["nascimento"] == "" || $dados["nascimento"] == NULL){
 			$nascimento = "NULL";
@@ -487,9 +519,9 @@ function insertCliente($dadosCliente, $db) {
 	$nome = tratarString($dadosCliente[0]);
 	$fone = foneBd(trataFone(tratarString($dadosCliente[1])));
 	$fone = array(
-			array(true, $fone),
-			array(false, ""),
-			array(false, "")
+		array(true, $fone),
+		array(false, ""),
+		array(false, "")
 	);
 	if($dadosCliente[2] == ""){
 		$nascimento = "NULL";

@@ -4,51 +4,178 @@
 * Classe de real-time e sincronismo MyOmni
 * Autor: Alisson Pelizaro (alissonpelizaro@hotmail.com)
 */
+
 class Sincronismo extends Msg {
 
   public  $access;
   private $config;
   private $util;
   private $db;
+  private $db2;
 
   public function __construct(){
     $this->access = new Ambiente;
     $this->util = new Util;
-    ini_set ( 'memory_limit' ,  '512M' );
+    ini_set ('memory_limit' ,  '512M');
+    clearstatcache();
   }
 
   public function proccess($servico){
-    //clearstatcache();
 
     $this->db = $this->connection();
+    $this->db2 = new Database;
     $this->config = $this->carregaConfig();
     $this->util = new Util;
 
     switch ($servico) {
+
       case "whatsapp":
       //Sincronismo do chat WhatsApp
       $this->whatsappSinc();
       break;
+
       case "telegram":
       //Sincronismo do chat Telegram
       $this->telegramSinc();
       break;
+
       case "enterness":
       //Sincronismo do chat Enterness
       $this->enternessSinc();
       break;
+
       case "-all":
       //Sincronismo de todas as midias
       $this->whatsappSinc();
-      //$this->telegramSinc();
       $this->enternessSinc();
+      //$this->telegramSinc();
       break;
+
+      case "-test":
+      //Testa sincronismos
+      $this->checaApiWhatsApp();
+      $this->checaApiEnterness();
+      die("\n--------------\nTestes finalizados");
+      break;
+
     }
+
     echo ".";
 
     $this->db = null;
     $this->util = null;
     $this->config = null;
+
+  }
+
+  public function checaParked(){
+    $parked = $this->db2->getQuery('park', array('intenc' => array("!=", "")));
+    $filas = $this->retFilas(true, true);
+
+    foreach ($parked as $pk) {
+      if($filas){
+        foreach ($filas as $fl) {
+          if($fl['nomeFila'] == $pk['intenc']){
+
+            $damRet = $this->dam($pk['intenc'], false, $pk['rmt'], $pk['plataforma']);
+            $agente = $damRet->id;
+
+            if($agente){
+              $texto = "Olá, já temos alguém disponível para lhe atender no setor *".$pk['intenc']."*. Estamos transferindo seu contato para o agente disponível.";
+              $msg = new Msg();
+              $msg->setPlataforma($pk['plataforma']);
+              $msg->setMsg($texto);
+              $msg->setDst($pk['rmt']);
+              $msg->sendMessage();
+              $protocolo = $this->geraProtocolo($pk['intenc']);
+
+              $dados = array(
+                'origem' => 'externo',
+                'dataInicio' => date("Y-m-d H:i:s"),
+                'status' => 0,
+                'remetente' => $pk['rmt'],
+                'idAgente' => $agente,
+                'plataforma' => $pk['plataforma'],
+                'fila' => $pk['intenc'],
+                'nome' => $pk['nome'],
+                'protocolo' => $protocolo,
+                'pendente' => 0
+              );
+
+              $this->db2->insQuery('atendimento', $dados);
+
+              unset($dados['fila']);
+              $at = $this->db2->getQuery('atendimento', $dados, array('idAtendimento'));
+
+              if($at[0]){
+                $at = $at[0]['idAtendimento'];
+              } else {
+                echo "Erro ao linkar um Agente com o Cliente estacionado (".$pk['rmt'].")";
+                return false;
+              }
+
+              $prevMsgs = $this->unsetPark($pk['rmt'], $pk['plataforma']);
+              //Se tem mensagens do cliente antes da URA, grava
+              if($prevMsgs){
+                $this->gravaPrevMsg($at, $prevMsgs);
+              }
+
+              $retAgent = "Atendimento iniciado: <b><i class='expi'>".$pk['intenc']."</i> (" . date('d/m/Y H:i:s').").</b>.";
+              $retClient = "Seu atendimento foi iniciado.";
+
+              if($protocolo){
+                $retAgent .= " Protocolo: <b>$protocolo</b>";
+                $retClient .= " O número do seu protocolo é: *". $protocolo ."*.";
+              }
+
+              $dados = array(
+                'idAtendimento' => $at,
+                'chat' => $retAgent,
+                'rmt' => 'cliente',
+                'visualizada' => 0,
+                'dataEnvio' => date("Y-m-d H:i:s")
+              );
+
+              $this->db2->insQuery('chat_atendimento', $dados);
+
+
+              $msg = new Msg();
+              $msg->setPlataforma($pk['plataforma']);
+              $msg->setMsg($retClient);
+              $msg->setDst($pk['rmt']);
+              $msg->sendMessage();
+
+              $this->enviarOla($pk['rmt'], $pk['plataforma'], $agente);
+
+              return true;
+            }
+
+          }
+        }
+      }
+    }
+
+    return false;
+
+  }
+
+  private function enviarOla($rmt, $plataforma, $id = false){
+    $comp = "";
+    if($id){
+      $nomeAgente = $this->db2->getQuery('user', array('idUser' => $id), array('nome'));
+      if($nomeAgente[0]){
+        $comp = ", meu nome é ".$nomeAgente[0]['nome'];
+      }
+    }
+    $saudacao = "Olá".$comp.". Como posso ajudá-lo (a)?";
+
+    $msg = new Msg();
+    $msg->setPlataforma($plataforma);
+    $msg->setMsg($saudacao);
+    $msg->setDst($rmt);
+    $msg->sendMessage();
+
+    return true;
 
   }
 
@@ -97,10 +224,19 @@ class Sincronismo extends Msg {
     }
   }
 
-  public function checaApiWhatsApp(){
+  private function checaApiWhatsApp(){
     //APENAS PARA DEBUG : Função de teste da API WhatsApp
-    return json_decode($this->curlExecWhatsApp());
+    echo "\nChecando status da API do WhatsApp...\n";
+    echo $this->curlExecWhatsApp();
   }
+
+  private function checaApiEnterness(){
+    //APENAS PARA DEBUG : Função de teste da API WhatsApp
+    echo "\nChecando status da API do Orquestador Enterness...\n";
+    echo $this->curlExecEnterness();
+  }
+
+
 
 
   /*
@@ -142,7 +278,7 @@ class Sincronismo extends Msg {
       }
 
     } else {
-      
+
       if($this->config->prioridade == 2){
         $timeOut = 15 * 60;
       } else if($this->config->prioridade == 3){
@@ -710,7 +846,7 @@ class Sincronismo extends Msg {
               return false;
             }
           } else {
-            echo "Atendimento não setado\n\r";
+            //echo "Atendimento não setado\n\r";
             // BUG: Atendimento não setado
             return false;
           }
@@ -873,7 +1009,7 @@ class Sincronismo extends Msg {
     $this->db->query($sql);
   }
 
-  private function retFilas($filtro = false){
+  private function retFilas($filtro = false, $configIgnore = false){
     if(!$filtro){
       $filtro = "";
     } else {
@@ -884,6 +1020,10 @@ class Sincronismo extends Msg {
     $filas = $this->db->query($sql);
     $filas = $filas->fetchAll();
 
+    if(!$configIgnore && $this->config->exibirFilas == 'todas'){
+      return $filas;
+    }
+
     $novoArray = array();
     $i = 0;
 
@@ -891,7 +1031,11 @@ class Sincronismo extends Msg {
       $nomeFila = $fila["nomeFila"];
       //$data = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."-20 minutes"));
 
-      $sql = "SELECT count(`idUser`) AS `total` FROM `user` WHERE `logged` = '1' AND `pausa` != '1' AND `filas` LIKE '%-$nomeFila-%'";
+      $sql = "SELECT count(`idUser`) AS `total` FROM `user` WHERE
+      `logged` = '1' AND
+      `pausa` != '1' AND
+      `filas` LIKE '%-$nomeFila-%' AND
+      `midias` LIKE '%-whatsapp-%'";
       $users = $this->db->query($sql);
       $users = $users->fetch();
 
@@ -1019,7 +1163,7 @@ class Sincronismo extends Msg {
           unset($at);
 
         } else {
-          echo "Atendimento não setado\n\r";
+          //echo "Atendimento não setado\n\r";
           // BUG: Atendimento não setado
         }
       }
@@ -1073,7 +1217,7 @@ class Sincronismo extends Msg {
     // DEBUG: echo "Tem ".count($response)." mensagens novas no WhatsApp";
 
     //Inverte array para as mais antigas primeiro
-    //$response = array_reverse($response);
+    $response = array_reverse($response);
 
     //Inicia loop para trabalhar todas as mensagens recebidas em ordem
     foreach ($response as $msgAr) {
@@ -1116,19 +1260,19 @@ class Sincronismo extends Msg {
             // DEBUG: echo "estacionado";
           } else {
 
-              //Mensagem de texto normal
+            //Mensagem de texto normal
 
-              //Checa palavõres
-              $resposta = $this->checaMensagem($msg->body, $at);
+            //Checa palavõres
+            $resposta = $this->checaMensagem($msg->body, $at);
 
-              if($resposta == true){
-                $msg->body = $resposta;
-                $ret = new Msg();
-                $ret->setPlataforma("whatsapp");
-                $ret->setMsg("Por favor, não utilize esse tipo de vocabulário.");
-                $ret->setDst($msg->chat->contact->id->_serialized);
-                $ret->sendMessage();
-              }
+            if($resposta == true){
+              $msg->body = $resposta;
+              $ret = new Msg();
+              $ret->setPlataforma("whatsapp");
+              $ret->setMsg("Por favor, não utilize esse tipo de vocabulário.");
+              $ret->setDst($msg->chat->contact->id->_serialized);
+              $ret->sendMessage();
+            }
 
             //Grava a mensagem recebida no chat
 
@@ -1144,7 +1288,7 @@ class Sincronismo extends Msg {
           }
 
         } else {
-          echo "Atendimento não setado\n\r";
+          //echo "Atendimento não setado\n\r";
           // BUG: Atendimento não setado
         }
       }
@@ -1566,14 +1710,16 @@ private function gravaCliente($dados){
           /*Não tem fila selecionada*/
 
           /* Checa se o atendimento está estacionado */
-          echo ">>>>". $msgIn;
+          //echo ">>>>". $msgIn;
           $checkPark = $this->checkPark($rmt, $plataforma, $msgIn);
           if($checkPark){
             //Está estacionado
 
             // DEBUG: echo "Esta estacionado";
             if(is_numeric($msgIn) && $msgIn > 0){
-              $filasDisp = $this->retFilas(true); //"TRUE" retorna apenas as filas ativas
+
+              //"TRUE" retorna apenas as filas ativas e ignora a configuração do DAM
+              $filasDisp = $this->retFilas(true, true);
               $filasUra = json_decode($checkPark['ura']);
 
               $fila = false;
@@ -1610,13 +1756,40 @@ private function gravaCliente($dados){
               } else {
 
                 if(!$filasDisp){
-                  $msg = new Msg();
-                  $msg->setPlataforma($plataforma);
-                  $msg->setMsg("Não há mais ninguém disponível para atendê-lo (a). Por favor, retorne novamente em outro horário.");
-                  $msg->setDst($rmt);
-                  $msg->sendMessage();
-                  $this->unsetPark($rmt, $plataforma);
-                  $filaSelecionada = "";
+                  if($this->config->exibirFilas == 'todas'){
+                    if(isset($filasUra->$msgIn)){
+
+                      $msg = new Msg();
+                      $msg->setPlataforma($plataforma);
+                      $msg->setMsg("No momento não temos nenhum agente disponível para atendimento.\nRegistramos seu contato para o setor *".$this->setCharset($filasUra->$msgIn)."* e entraremos em contato o mais breve possível");
+                      $msg->setDst($rmt);
+                      $msg->sendMessage();
+
+                      $this->setIntencaoPark($rmt, $plataforma, $this->setCharset($filasUra->$msgIn), $nome);
+
+                    } else {
+
+                      $msg = new Msg();
+                      $msg->setPlataforma($plataforma);
+                      $msg->setMsg('Opcao inválida!');
+                      $msg->setDst($rmt);
+                      $msg->sendMessage();
+                      $filaSelecionada = "";
+
+                    }
+
+                  } else {
+
+                    $msg = new Msg();
+                    $msg->setPlataforma($plataforma);
+                    $msg->setMsg("Não há mais ninguém disponível para atendê-lo (a). Por favor, retorne novamente em outro horário.");
+                    $msg->setDst($rmt);
+                    $msg->sendMessage();
+                    $this->unsetPark($rmt, $plataforma);
+                    $filaSelecionada = "";
+
+                  }
+
                 } else {
                   if(isset($filasUra->$msgIn)){
                     $filaSelecionada = $filasUra->$msgIn;
@@ -1635,7 +1808,7 @@ private function gravaCliente($dados){
 
               }
             } else {
-                /*
+              /*
               $msg = new Msg();
               $msg->setPlataforma($plataforma);
               $msg->setMsg('Opcao inválida!');
@@ -1670,27 +1843,40 @@ private function gravaCliente($dados){
                 $at = $this->checaAtendimentoParalelo($this->formataTelefone($rmtExp[0], true));
 
                 if(!$at){
-                  if(count($filas) > 0){
-                    $texto = $this->config->saudacao."\n\nSobre qual assunto deseja falar?\nResponda com o *número* da opção desejada:\n";
-                    $aux = 1;
-                    $arrayJson = array();
 
-                    foreach ($filas as $fl) {
-                      $texto .= "\n*".$aux."* - ".$fl['nomeFila'];
-                      $arrayJson[$aux] = $fl['nomeFila'];
-                      $aux++;
+                  if($this->checaHorario()){
+
+                    if(count($filas) > 0){
+                      $texto = $this->config->saudacao."\n\nSobre qual assunto deseja falar?\nResponda com o *número* da opção desejada:\n";
+                      $aux = 1;
+                      $arrayJson = array();
+
+                      foreach ($filas as $fl) {
+                        $texto .= "\n*".$aux."* - ".$fl['nomeFila'];
+                        $arrayJson[$aux] = $fl['nomeFila'];
+                        $aux++;
+                      }
+                      $msg = new Msg();
+                      $msg->setPlataforma($plataforma);
+                      $msg->setMsg($texto);
+                      $msg->setDst($rmt);
+                      $msg->sendMessage();
+
+                      $this->setPark($rmt, $plataforma, $msgIn, json_encode($arrayJson));
+                      return 'Parked';
+                    } else {
+                      $semFila = true;
                     }
+                  } else {
+
                     $msg = new Msg();
                     $msg->setPlataforma($plataforma);
-                    $msg->setMsg($texto);
+                    $msg->setMsg($this->config->limiteResp);
                     $msg->setDst($rmt);
                     $msg->sendMessage();
 
-                    $this->setPark($rmt, $plataforma, $msgIn, json_encode($arrayJson));
-                    return 'Parked';
-                  } else {
-                    $semFila = true;
                   }
+
                 } else {
                   $this->changePlataforma($at, $rmt, 'whatsapp');
                   return $at;
@@ -1782,7 +1968,7 @@ private function gravaCliente($dados){
               }
 
               $sql = "SELECT `nome` FROM `user` WHERE `idUser` = $agente";
-              echo $sql;
+              //echo $sql;
               $nomeAgente = $this->db->query($sql);
               $nomeAgente = $nomeAgente->fetch();
               $nomeAgente = $nomeAgente["nome"];
@@ -1865,7 +2051,6 @@ private function gravaCliente($dados){
       $data = date('Y-m-d H:i:s');
       $sql = 'INSERT INTO `park` (`rmt`, `dataPark`, `plataforma`, `msg`, `ura`)
       VALUES '.$p[0].'"'.$rmt.'", "'.$data.'", "'.$plataforma.'", "'.$msg.'", '."'".$ura."'".$p[1];
-      echo $sql;
       $this->db->query($sql);
     }
 
@@ -1881,6 +2066,19 @@ private function gravaCliente($dados){
         return $park['msg'];
       }
       return false;
+    }
+
+    private function setIntencaoPark($rmt, $plataforma, $fila, $nome = false){
+
+      $sql = 'UPDATE `park` SET
+      `intenc` = "'.$fila.'",
+      `dataIntenc` = "'.date('Y-m-d H:i:s').'",
+      `nome` = "'.$nome.'"
+      WHERE `rmt` = "'.$rmt.'" AND `plataforma` = "'.$plataforma.'"';
+      // DEBUG: echo $sql;
+
+      $this->db->query($sql);
+
     }
 
     private function checkPark($rmt, $plataforma, $msg = false){
@@ -1922,6 +2120,8 @@ private function gravaCliente($dados){
         case "enterness":
         return true;
         case "-all":
+        return true;
+        case "-test":
         return true;
         default:
         return false;
@@ -2061,66 +2261,66 @@ private function gravaCliente($dados){
     }
 
     private function setCharset($str){
-        $str = str_replace("u00c0", "À", $str);
-        $str = str_replace("u00c1", "Á", $str);
-        $str = str_replace("u00c2", "Â", $str);
-        $str = str_replace("u00c3", "Ã", $str);
-        $str = str_replace("u00c4", "Ä", $str);
-        $str = str_replace("u00c5", "Å", $str);
-        $str = str_replace("u00c6", "Æ", $str);
-        $str = str_replace("u00c7", "Ç", $str);
-        $str = str_replace("u00c8", "È", $str);
-        $str = str_replace("u00c9", "É", $str);
-        $str = str_replace("u00ca", "Ê", $str);
-        $str = str_replace("u00cb", "Ë", $str);
-        $str = str_replace("u00cc", "Ì", $str);
-        $str = str_replace("u00cd", "Í", $str);
-        $str = str_replace("u00ce", "Î", $str);
-        $str = str_replace("u00cf", "Ï", $str);
-        $str = str_replace("u00d1", "Ñ", $str);
-        $str = str_replace("u00d2", "Ò", $str);
-        $str = str_replace("u00d3", "Ó", $str);
-        $str = str_replace("u00d4", "Ô", $str);
-        $str = str_replace("u00d5", "Õ", $str);
-        $str = str_replace("u00d6", "Ö", $str);
-        $str = str_replace("u00d8", "Ø", $str);
-        $str = str_replace("u00d9", "Ù", $str);
-        $str = str_replace("u00da", "Ú", $str);
-        $str = str_replace("u00db", "Û", $str);
-        $str = str_replace("u00dc", "Ü", $str);
-        $str = str_replace("u00dd", "Ý", $str);
-        $str = str_replace("u00df", "ß", $str);
-        $str = str_replace("u00e0", "à", $str);
-        $str = str_replace("u00e1", "á", $str);
-        $str = str_replace("u00e2", "â", $str);
-        $str = str_replace("u00e3", "ã", $str);
-        $str = str_replace("u00e4", "ä", $str);
-        $str = str_replace("u00e5", "å", $str);
-        $str = str_replace("u00e6", "æ", $str);
-        $str = str_replace("u00e7", "ç", $str);
-        $str = str_replace("u00e8", "è", $str);
-        $str = str_replace("u00e9", "é", $str);
-        $str = str_replace("u00ea", "ê", $str);
-        $str = str_replace("u00eb", "ë", $str);
-        $str = str_replace("u00ec", "ì", $str);
-        $str = str_replace("u00ed", "í", $str);
-        $str = str_replace("u00ee", "î", $str);
-        $str = str_replace("u00ef", "ï", $str);
-        $str = str_replace("u00f0", "ð", $str);
-        $str = str_replace("u00f1", "ñ", $str);
-        $str = str_replace("u00f2", "ò", $str);
-        $str = str_replace("u00f3", "ó", $str);
-        $str = str_replace("u00f4", "ô", $str);
-        $str = str_replace("u00f5", "õ", $str);
-        $str = str_replace("u00f6", "ö", $str);
-        $str = str_replace("u00f8", "ø", $str);
-        $str = str_replace("u00f9", "ù", $str);
-        $str = str_replace("u00fa", "ú", $str);
-        $str = str_replace("u00fb", "û", $str);
-        $str = str_replace("u00fc", "ü", $str);
-        $str = str_replace("u00fd", "ý", $str);
-        $str = str_replace("u00ff", "ÿ", $str);
-        return $str;
+      $str = str_replace("u00c0", "À", $str);
+      $str = str_replace("u00c1", "Á", $str);
+      $str = str_replace("u00c2", "Â", $str);
+      $str = str_replace("u00c3", "Ã", $str);
+      $str = str_replace("u00c4", "Ä", $str);
+      $str = str_replace("u00c5", "Å", $str);
+      $str = str_replace("u00c6", "Æ", $str);
+      $str = str_replace("u00c7", "Ç", $str);
+      $str = str_replace("u00c8", "È", $str);
+      $str = str_replace("u00c9", "É", $str);
+      $str = str_replace("u00ca", "Ê", $str);
+      $str = str_replace("u00cb", "Ë", $str);
+      $str = str_replace("u00cc", "Ì", $str);
+      $str = str_replace("u00cd", "Í", $str);
+      $str = str_replace("u00ce", "Î", $str);
+      $str = str_replace("u00cf", "Ï", $str);
+      $str = str_replace("u00d1", "Ñ", $str);
+      $str = str_replace("u00d2", "Ò", $str);
+      $str = str_replace("u00d3", "Ó", $str);
+      $str = str_replace("u00d4", "Ô", $str);
+      $str = str_replace("u00d5", "Õ", $str);
+      $str = str_replace("u00d6", "Ö", $str);
+      $str = str_replace("u00d8", "Ø", $str);
+      $str = str_replace("u00d9", "Ù", $str);
+      $str = str_replace("u00da", "Ú", $str);
+      $str = str_replace("u00db", "Û", $str);
+      $str = str_replace("u00dc", "Ü", $str);
+      $str = str_replace("u00dd", "Ý", $str);
+      $str = str_replace("u00df", "ß", $str);
+      $str = str_replace("u00e0", "à", $str);
+      $str = str_replace("u00e1", "á", $str);
+      $str = str_replace("u00e2", "â", $str);
+      $str = str_replace("u00e3", "ã", $str);
+      $str = str_replace("u00e4", "ä", $str);
+      $str = str_replace("u00e5", "å", $str);
+      $str = str_replace("u00e6", "æ", $str);
+      $str = str_replace("u00e7", "ç", $str);
+      $str = str_replace("u00e8", "è", $str);
+      $str = str_replace("u00e9", "é", $str);
+      $str = str_replace("u00ea", "ê", $str);
+      $str = str_replace("u00eb", "ë", $str);
+      $str = str_replace("u00ec", "ì", $str);
+      $str = str_replace("u00ed", "í", $str);
+      $str = str_replace("u00ee", "î", $str);
+      $str = str_replace("u00ef", "ï", $str);
+      $str = str_replace("u00f0", "ð", $str);
+      $str = str_replace("u00f1", "ñ", $str);
+      $str = str_replace("u00f2", "ò", $str);
+      $str = str_replace("u00f3", "ó", $str);
+      $str = str_replace("u00f4", "ô", $str);
+      $str = str_replace("u00f5", "õ", $str);
+      $str = str_replace("u00f6", "ö", $str);
+      $str = str_replace("u00f8", "ø", $str);
+      $str = str_replace("u00f9", "ù", $str);
+      $str = str_replace("u00fa", "ú", $str);
+      $str = str_replace("u00fb", "û", $str);
+      $str = str_replace("u00fc", "ü", $str);
+      $str = str_replace("u00fd", "ý", $str);
+      $str = str_replace("u00ff", "ÿ", $str);
+      return $str;
     }
 
     public function gravaLog($acao, $idUser, $idAt, $o = false){
@@ -2141,6 +2341,21 @@ private function gravaCliente($dados){
       } else {
         return false;
       }
+    }
+
+    private function checaHorario(){
+      if($this->config->limite){
+        $hrs = explode(",", $this->config->limite);
+        $hrini = strtotime($hrs[0]);
+        $hrfim = strtotime($hrs[1]);
+        $now = strtotime(date("H:i"));
+
+        if($now < $hrini || $now > $hrfim){
+          return false;
+        }
+      }
+
+      return true;
     }
 
     private function connection(){
