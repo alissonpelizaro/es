@@ -11,7 +11,6 @@
     public $timeZone = "America/Sao_Paulo";   //Define timezone
     public $environment = "DEVELOPMENT";      //Ambiente atual da aplicação 'PRODUCTION' / 'DEVELOPMENT' / 'MAINTENANCE'
     public $orquestrador = "http://chat.enterness.com";
-    public $bearer = "Bearer onYz2EHfTSmo9CQz0ta0NbNAVH1LAtjjA5m3DedV3TLnZnDf5H";
     public $urlMidias = "/data/www/default/omni/my/assets/medias/"; //Caminho onde as mídias ficarão armazenadas (necessário perm. 777)
 
     //CONFIGURAÇÔES DE BANCO DE DADOS
@@ -20,27 +19,6 @@
     private $db_user = "root";
     private $db_pass = "";
     private $db_port = 80;
-
-    //CONFIGURAÇÕES DAS APIS DE MÍDIAS SOCIAIS
-    /*WhatsApp*/
-    private $whatsAppServer = "http://68.235.33.35:8100/";
-    private $m_WhatsApp_url = "chats/XXXXXX/messages";
-    private $c_WhatsApp_url = "messages/unread";
-    private $whatsapp_port = 8100;
-    private $userWhatsApp = "t09";
-    private $tokenWhatsApp = "QjbXR1w2f0bRB55M8jrF2tBU6tpTkkAu";
-    /*Telegram*/
-    private $m_Telegram_url = "https://orchestrator.enterness.com:8243/telegram/v1.0.0/bot686376695%3AAAH7RxnwfKlP4R4PTnvkD9GgkQ9j4Sw7zJU/sendMessage?chat_id=XXXXXX&text=YYYYYY";
-    private $c_Telegram_url = "https://orchestrator.enterness.com:8243/telegram/v1.0.0/bot686376695%3AAAH7RxnwfKlP4R4PTnvkD9GgkQ9j4Sw7zJU/getUpdates";
-    /*Facebook Messenger*/
-    private $m_Messenger_url = "";
-    private $c_Messenger_url = "";
-    /*Skype*/
-    private $m_Skype_url = "";
-    private $c_Skype_url = "";
-    /*Sms*/
-    private $m_Sms_url = "";
-    private $c_Sms_url = "";
 
     function __construct(){
       if($this->timeZone != ""){
