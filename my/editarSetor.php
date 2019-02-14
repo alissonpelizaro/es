@@ -61,12 +61,12 @@ include 'inc/head.php';
                       <div class="form-check text-center"  style="padding-left: 10px; text-align: center;">
                         <label class="col-sm-12 m-t-20 control-label">Gerenciar módulos:</label>
                         <table style="width: 225px; margin: auto;">
-                          <tr >
+                          <!--<tr>
                             <td class="p-b-5 p-t-5">Concessionárias:</td>
                             <td>
                               <input class="form-check-input" type="checkbox" <?php if(strpos($setor['modulos'], '-conc-') !== false){ echo "checked"; } ?> name="checkCons" id="checkCons" value="1">
                             </td>
-                          </tr>
+                          </tr> -->
                           <tr>
                             <td class="p-b-5 p-t-5">Mural:</td>
                             <td>
