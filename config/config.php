@@ -5,7 +5,7 @@
    */
   class Ambiente {
 
-    public $server = "172.16.100.150/easy";        //URL da aplicação
+    public $server = "localhost/es";        //URL da aplicação
     public $lang = "pt-BR";                   //Definie idioma padrão
     public $charSet = "UTF-8";                //Define charset default
     public $timeZone = "America/Sao_Paulo";   //Define timezone
@@ -18,7 +18,7 @@
     private $db_host = "localhost";
     private $db_database = "my_omni";
     private $db_user = "root";
-    private $db_pass = "entercbs";
+    private $db_pass = "";
     private $db_port = 80;
 
     //CONFIGURAÇÕES DAS APIS DE MÍDIAS SOCIAIS
